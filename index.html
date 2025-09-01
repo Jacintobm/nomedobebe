@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <meta charset="UTF-8" />
+    <title>Adivina el nombre de nuestro hijo</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        background-color: #fefefe;
+        text-align: center;
+        padding: 10px;
+        margin: 0;
+      }
+      h1 {
+        font-size: 2em;
+        color: #444;
+        margin-bottom: 20px;
+      }
+      .crucigrama {
+        display: grid;
+        grid-template-columns: repeat(7, 40px);
+        gap: 2px;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+      input.celda {
+        width: 38px;
+        height: 38px;
+        font-size: 22px;
+        text-align: center;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        text-transform: uppercase;
+        box-sizing: border-box;
+      }
+      .central {
+        background-color: white;
+        font-weight: bold;
+      }
+      .revelada {
+        background-color: #a5d6a7;
+        border-color: #4caf50;
+        font-weight: bold;
+      }
+      .espacio {
+        width: 38px;
+        height: 38px;
+        border: 1px solid #eee;
+        background-color: #f0f0f0;
+        border-radius: 4px;
+      }
+      .pistas-grid {
+        margin-top: 30px;
+        text-align: left;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .pista-item {
+        margin-bottom: 6px;
+      }
+
+      @media screen and (max-width: 400px) {
+        .crucigrama {
+          grid-template-columns: repeat(7, 46px);
+          gap: 4px;
+        }
+        .espacio,
+        input.celda {
+          width: 46px;
+          height: 46px;
+        }
+      }
+
+      @media (min-width: 401px) and (max-width: 600px) {
+        .crucigrama {
+          grid-template-columns: repeat(7, 54px);
+          gap: 4px;
+        }
+        .espacio,
+        input.celda {
+          width: 54px;
+          height: 54px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Adivina el nombre de nuestro hijo...</h1>
+    <div class="crucigrama" id="crucigrama"></div>
+    <div class="pistas-grid">
+      <div class="pista-item">1 - Marca del primer auto de Jachu y Regie</div>
+      <div class="pista-item">
+        2 - Mes en el que Jachu y Regie se pusieron de novios
+      </div>
+      <div class="pista-item">
+        3 - Jachu y Regie este año cumplen las bodas de...
+      </div>
+      <div class="pista-item">4 - Nombre del primer gato de Jachu y Regie</div>
+      <div class="pista-item">
+        5 - Ciudad donde Jachu le propuso matrimonio a Regie
+      </div>
+      <div class="pista-item">
+        6 - País principal a donde Regie y Jachu viajaron por última vez
+      </div>
+      <div class="pista-item">7 - Apodo del hermano mayor del futuro bebé</div>
+    </div>
+
+    <script>
+      const nombre = "CAETANO";
+      const respuestas = [
+        "CITROEN",
+        "ABRIL",
+        "HIERRO",
+        "THELMUS",
+        "PARIS",
+        "ISLANDIA",
+        "DINHO",
+      ];
+
+      const layout = [
+        { arriba: 0, abajo: 6 }, // C
+        { arriba: 0, abajo: 4 }, // A
+        { arriba: 2, abajo: 3 }, // E
+        { arriba: 0, abajo: 6 }, // T
+        { arriba: 1, abajo: 3 }, // A
+        { arriba: 4, abajo: 3 }, // N
+        { arriba: 4, abajo: 0 }, // O
+      ];
+
+      const totalRows = 11; // ajustado a filas útiles
+      const totalCols = 7;
+      const middleRow = 4; // fila donde va "CAETANO"
+
+      const crucigrama = document.getElementById("crucigrama");
+      const grid = Array.from({ length: totalRows }, () =>
+        Array(totalCols).fill(null)
+      );
+
+      nombre.split("").forEach((letra, colIndex) => {
+        const { arriba, abajo } = layout[colIndex];
+        const total = arriba + 1 + abajo;
+        const startRow = middleRow - arriba;
+
+        for (let i = 0; i < total; i++) {
+          const input = document.createElement("input");
+          input.className = "celda";
+          input.maxLength = 1;
+          input.dataset.col = colIndex;
+          input.dataset.index = i;
+          input.dataset.answer = respuestas[colIndex];
+
+          if (i === arriba) {
+            input.classList.add("central");
+            input.id = `letra-${colIndex}`;
+          }
+
+          input.addEventListener("input", moverYSugerir);
+          grid[startRow + i][colIndex] = input;
+        }
+      });
+
+      grid.forEach((row) => {
+        row.forEach((cell) => {
+          if (cell) {
+            crucigrama.appendChild(cell);
+          } else {
+            const espacio = document.createElement("div");
+            espacio.className = "espacio";
+            crucigrama.appendChild(espacio);
+          }
+        });
+      });
+
+      function moverYSugerir(e) {
+        const input = e.target;
+        const colIndex = parseInt(input.dataset.col);
+        const inputs = Array.from(
+          document.querySelectorAll(`input[data-col='${colIndex}']`)
+        );
+        inputs.sort(
+          (a, b) => parseInt(a.dataset.index) - parseInt(b.dataset.index)
+        );
+
+        const userInput = inputs
+          .map((inp) => inp.value || " ")
+          .join("")
+          .toUpperCase();
+        const target = respuestas[colIndex];
+
+        if (userInput === target) {
+          const central = document.getElementById(`letra-${colIndex}`);
+          central.classList.add("revelada");
+          central.value = nombre[colIndex];
+        }
+
+        const completas =
+          [...document.querySelectorAll(".revelada")].length === 7;
+        if (completas) {
+          setTimeout(
+            () =>
+              alert(
+                "🎉 ¡Felicitaciones! Preparate para recibir a Caetano próximamente 💙"
+              ),
+            100
+          );
+        }
+
+        const index = parseInt(input.dataset.index);
+        const next = inputs[index + 1];
+        if (next && !next.disabled) next.focus();
+      }
+    </script>
+  </body>
+</html>
